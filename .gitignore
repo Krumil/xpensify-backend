@@ -1,0 +1,19 @@
+.env
+.vscode
+.DS_Store
+
+# pycache
+__pycache__
+
+# node_modules
+node_modules
+
+# dist
+dist
+
+# telethon session
+*.session
+
+# folder chat_data
+chat_data/
+
