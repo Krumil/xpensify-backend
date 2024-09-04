@@ -17,3 +17,5 @@ dist
 # folder chat_data
 chat_data/
 
+test_messages.txt
+
