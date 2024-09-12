@@ -5,7 +5,7 @@ from typing import List
 from utils import calculate_settlement
 from database import (create_group, get_or_create_user, add_user_to_group, 
 					  create_transaction, create_settlement, session_scope, 
-					  update_group, Group, get_user_from_tgId)
+					  update_group, Group, get_user_from_tgId, get_settlements)
 import json
 import os
 from sqlalchemy.exc import SQLAlchemyError
@@ -85,9 +85,10 @@ def format_chats_to_structured_json(messages: List[ChatMessage], members: List[i
 		raise
 
 	
+	
 	# Create a new dictionary with all the data including settlements
 	finalResult = output.model_dump()
-	finalResult['settlements'] = settlements
+	finalResult['settlements'] = get_settlements(str(groupId))
 
 	# for every group member, get the user object
 	formattedMembers = []

@@ -241,3 +241,58 @@ def get_user_from_tgId(tgId: str, session=None):
     else:
         with session_scope() as session:
             return _get_user_from_tgId(session)
+        
+
+def complete_settlements(settlement_ids: list, session=None):
+    def _complete_settlements(session):
+        updated_settlements = session.query(Settlement).filter(Settlement.id.in_(settlement_ids)).update(
+            {Settlement.status: 'completed', Settlement.updatedAt: datetime.utcnow()},
+            synchronize_session=False
+        )
+        session.flush()
+        return updated_settlements
+
+    if session:
+        return _complete_settlements(session)
+    else:
+        with session_scope() as session:
+            return _complete_settlements(session)		
+        
+def get_settlements(groupTgId: str, session=None):
+    def _get_settlements(session):
+        # First, find the Group by its telegram ID
+		
+        group = session.query(Group).filter_by(tgId=groupTgId).first()
+        if not group:
+            return []  # Return empty list if group not found
+
+        # Get all group members for the given group
+        group_members = session.query(GroupMember).filter_by(groupId=group.id).all()
+        
+        # Extract user IDs from group members
+        user_ids = [member.userId for member in group_members]
+        
+        # Query settlements where either payer or receiver is in the group
+        settlements = session.query(Settlement).join(User, 
+            ((Settlement.payerId == User.tgId) | (Settlement.receiverId == User.tgId))
+        ).filter(User.id.in_(user_ids)).all()
+        
+        # Convert to the desired format
+        formatted_settlements = [
+            {
+                "id": settlement.id,
+                "fromUserId": settlement.payerId,
+                "toUserId": settlement.receiverId,
+                "amount": float(settlement.amount),  # Convert Decimal to float
+                "status": settlement.status
+            }
+            for settlement in settlements
+        ]
+        
+        return formatted_settlements
+
+    if session:
+        return _get_settlements(session)
+    else:
+        with session_scope() as session:
+            return _get_settlements(session)
