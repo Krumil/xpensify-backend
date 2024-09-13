@@ -275,7 +275,7 @@ def get_settlements(groupTgId: str, session=None):
         # Query settlements where either payer or receiver is in the group
         settlements = session.query(Settlement).join(User, 
             ((Settlement.payerId == User.tgId) | (Settlement.receiverId == User.tgId))
-        ).filter(User.id.in_(user_ids)).all()
+        ).filter(User.id.in_(user_ids), Settlement.status == 'pending').all()
         
         # Convert to the desired format
         formatted_settlements = [

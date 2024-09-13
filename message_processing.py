@@ -4,6 +4,8 @@ from telethon.tl.types import Message
 from models import ChatMessage
 from agent import format_chats_to_structured_json
 from config import DATA_DIR
+from datetime import datetime
+from database import session_scope, Group, get_user_from_tgId, get_settlements
 
 # In-memory chat storage
 chats = {}
@@ -43,6 +45,22 @@ async def process_messages(client, chat_id):
 		processed_group = format_chats_to_structured_json(messages, members, chat_id)
 		
 		print(f"Saved {len(messages)} messages for chat {chat_id}")
-
-	# chats[chat_id] = {"last_processed": datetime.now()}
+	else:
+		with session_scope() as session:
+			dbGroup = session.query(Group).filter_by(tgId=chat_id).first()
+			if dbGroup:
+				processed_group = {
+					"group": {
+						"tgId": dbGroup.tgId,
+						"name": dbGroup.name,
+						"description": dbGroup.description,
+						"currency": dbGroup.currency,
+						"members": [get_user_from_tgId(member.user.tgId) for member in dbGroup.members]
+					},
+					"settlements": get_settlements(str(chat_id))
+				}
+			else:
+				processed_group = None
+		
+	chats[chat_id] = {"last_processed": datetime.now()}
 	return processed_group

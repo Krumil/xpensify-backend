@@ -1,14 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
 from telethon.tl.functions.messages import GetCommonChatsRequest
-from pydantic import BaseModel
-from typing import List
 from telethon.tl.types import Chat
 from config import MY_USER_ID, TEST_USER_ID
 from message_processing import process_messages
 from database import complete_settlements
-
-class SettlementIds(BaseModel):
-    ids: List[int]
 
 def create_router(client):
 	router = APIRouter()
@@ -58,9 +53,11 @@ def create_router(client):
 			raise HTTPException(status_code=500, detail=str(e))
 
 	@router.post("/complete-settlements")
-	async def complete_settlements_endpoint(settlement_ids: SettlementIds):
+	async def complete_settlements_endpoint(request: Request):
 		try:
-			updated_count = complete_settlements(settlement_ids.ids)
+			data = await request.json()
+			settlement_ids = data.get('settlementIds')
+			updated_count = complete_settlements(settlement_ids)
 			return {"message": f"Successfully completed {updated_count} settlements"}
 		except Exception as e:
 			print(e)
