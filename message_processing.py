@@ -6,6 +6,8 @@ from agent import format_chats_to_structured_json
 from config import DATA_DIR
 from datetime import datetime
 from database import session_scope, Group, get_user_from_tgId, get_settlements
+from sqlalchemy import cast, String
+
 
 # In-memory chat storage
 chats = {}
@@ -47,7 +49,7 @@ async def process_messages(client, chat_id):
 		print(f"Saved {len(messages)} messages for chat {chat_id}")
 	else:
 		with session_scope() as session:
-			dbGroup = session.query(Group).filter_by(tgId=chat_id).first()
+			dbGroup = session.query(Group).filter(cast(Group.tgId, String) == str(chat_id)).first()			
 			if dbGroup:
 				processed_group = {
 					"group": {
